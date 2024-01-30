@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.ticker as mtick
 
-ruta_archivo = r"F:\B\2024.xlsx"
+ruta_archivo = r"2024.xlsx"
 
 try:
-    ruta_archivo = r"F:\B\2024.xlsx"
+    ruta_archivo = r"2024.xlsx"
 
     # Cargar el libro de trabajo
     libro_trabajo = openpyxl.load_workbook(ruta_archivo, data_only=True)
