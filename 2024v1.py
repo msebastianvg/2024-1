@@ -459,7 +459,6 @@ def graphSportsAltDate(dataframe):
 
 graphSportsAltDate(df_all)
 
-from mlxtend.plotting import heatmap
 import seaborn as sns
 
 
