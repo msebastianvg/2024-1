@@ -141,8 +141,8 @@ col3.metric(label="Win rate", value=f"{round(x3 * 100, 3)} %", delta=f"{calcular
 
 
 
-st.subheader("Dataframe.")
-st.dataframe(dataframe)
+#st.subheader("Dataframe.")
+#st.dataframe(dataframe)
 
 
 #col1 = st.columns(1)[0]
