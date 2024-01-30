@@ -247,7 +247,7 @@ def graphLinearNonlinear(dataframe):
     })
 
     # Visualizar los resultados en Streamlit
-    st.write(df_resultados)
+    #st.write(df_resultados)
 
     fig, ax = plt.subplots()
     ax.scatter(x, y, label='Real profit', color='lightgreen', s=30)
@@ -521,8 +521,8 @@ st.latex(r"P(x_1, x_2, x_3) = ax_1 + bx_2 + cx_3")
 st.subheader("Clustering analysis")
 from sklearn.datasets import make_blobs
 #X, y = make_blobs(n_samples=250,n_features=2,centers=3,cluster_std=0.5,shuffle=True,random_state=0)
-X = dataframe[['N', 'PERCENTAGE']].values
-y = dataframe['PERCENTAGE'].values
+X = df_all[['ODD', 'DIFF']].values
+y = df_all['DIFF'].values
 fig, ax = plt.subplots()
 ax.scatter(X[:, 0],
             X[:, 1],
