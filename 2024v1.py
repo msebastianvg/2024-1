@@ -9,8 +9,7 @@ import matplotlib.ticker as mtick
 ruta_archivo = r"F:\B\2024.xlsx"
 
 try:
-    #ruta_archivo = r"F:\B\2024.xlsx"
-    ruta_archivo = "2024.xlsx"
+    ruta_archivo = r"F:\B\2024.xlsx"
 
     # Cargar el libro de trabajo
     libro_trabajo = openpyxl.load_workbook(ruta_archivo, data_only=True)
@@ -34,6 +33,9 @@ try:
     # Eliminar filas con valores nulos en la columna "N"
     dataframe = dataframe.dropna(subset=["N"])
 
+    df_all = dataframe
+    df_sports = dataframe
+    df_sports_bets = dataframe
     # Acceder a los valores calculados en lugar de las fórmulas en la columna "OUT"
     #dataframe["OUT"] = hoja["OUT"].value
 
@@ -139,8 +141,8 @@ col3.metric(label="Win rate", value=f"{round(x3 * 100, 3)} %", delta=f"{calcular
 
 
 
-#st.subheader("Dataframe.")
-#st.dataframe(dataframe)
+st.subheader("Dataframe.")
+st.dataframe(dataframe)
 
 
 #col1 = st.columns(1)[0]
@@ -148,217 +150,411 @@ col3.metric(label="Win rate", value=f"{round(x3 * 100, 3)} %", delta=f"{calcular
 
 
 
+def graphWL(dataframe):
+    st.subheader("Wins and losses")
 
-st.subheader("Wins and losses")
+    # Supongamos que ya tienes tu DataFrame con las columnas 'ODD' y 'WL'
+    # Definir colores según los valores de 'WL'
+    colores = dataframe['WL'].map({1: 'lightgreen', 0: 'salmon'})
 
-# Supongamos que ya tienes tu DataFrame con las columnas 'ODD' y 'WL'
-# Definir colores según los valores de 'WL'
-colores = dataframe['WL'].map({1: 'lightgreen', 0: 'salmon'})
+    # Crear un gráfico de dispersión para 'WL' igual a 1
+    fig, ax = plt.subplots()
+    scatter_wl_1 = ax.scatter(dataframe[dataframe['WL'] == 1]['ODD'], dataframe[dataframe['WL'] == 1]['ODD'],
+                              label='Wins', c='lightgreen', s=30)
 
-# Crear un gráfico de dispersión para 'WL' igual a 1
-fig, ax = plt.subplots()
-scatter_wl_1 = ax.scatter(dataframe[dataframe['WL'] == 1]['ODD'], dataframe[dataframe['WL'] == 1]['ODD'], label='Wins', c='lightgreen', s=30)
+    # Crear un gráfico de dispersión para 'WL' igual a 0
+    scatter_wl_0 = ax.scatter(dataframe[dataframe['WL'] == 0]['ODD'], dataframe[dataframe['WL'] == 0]['ODD'],
+                              label='Losses', c='salmon', s=30)
 
-# Crear un gráfico de dispersión para 'WL' igual a 0
-scatter_wl_0 = ax.scatter(dataframe[dataframe['WL'] == 0]['ODD'], dataframe[dataframe['WL'] == 0]['ODD'], label='Losses', c='salmon', s=30)
+    # Configurar etiquetas y título
+    ax.set_xlabel('ODD', fontsize=8)
+    ax.set_ylabel('ODD', fontsize=8)
 
-# Configurar etiquetas y título
-ax.set_xlabel('ODD', fontsize=8)
-ax.set_ylabel('ODD', fontsize=8)
+    # Agregar leyenda combinando ambos conjuntos de puntos
+    ax.legend(handles=[scatter_wl_1, scatter_wl_0], fontsize=8)
 
-# Agregar leyenda combinando ambos conjuntos de puntos
-ax.legend(handles=[scatter_wl_1, scatter_wl_0], fontsize=8)
+    # Configurar tamaños de etiquetas
+    ax.tick_params(axis='x', labelsize=7)
+    ax.tick_params(axis='y', labelsize=7)
 
-# Configurar tamaños de etiquetas
-ax.tick_params(axis='x', labelsize=7)
-ax.tick_params(axis='y', labelsize=7)
-
-# Mostrar el gráfico en Streamlit
-st.pyplot(fig)
-
-
-
-st.subheader("Sports")
-
-dataframe_filtrado = dataframe[dataframe['SPORT'] != 'DPI']
-
-# Crear una figura y ejes
-fig, ax = plt.subplots()
-
-# Obtener colores únicos para cada valor único en la columna 'SPORT'
-colores_por_sport = {sport: f'C{i}' for i, sport in enumerate(dataframe_filtrado['SPORT'].unique())}
-
-# Iterar sobre cada valor único de 'SPORT' y dibujar los puntos correspondientes
-for sport, color in colores_por_sport.items():
-    datos_sport = dataframe_filtrado[dataframe_filtrado['SPORT'] == sport]
-    ax.scatter(datos_sport['ODD'], datos_sport['ODD'], label=sport, color=color, s=30)
-
-# Configurar etiquetas y título
-ax.set_xlabel('ODD', fontsize=8)
-ax.set_ylabel('ODD', fontsize=8)
-
-# Agregar leyenda
-ax.legend(fontsize=8)
-
-# Configurar límites de los ejes X e Y
-ax.set_xlim(dataframe_filtrado['ODD'].min()-0.02, dataframe_filtrado['ODD'].max()+0.02)
-ax.set_ylim(dataframe_filtrado['ODD'].min()-0.02, dataframe_filtrado['ODD'].max()+0.02)
-
-# Configurar tamaños de etiquetas
-ax.tick_params(axis='x', labelsize=7)
-ax.tick_params(axis='y', labelsize=7)
-
-# Mostrar el gráfico en Streamlit
-st.pyplot(fig)
+    # Mostrar el gráfico en Streamlit
+    st.pyplot(fig)
 
 
 
-st.subheader("Odds normal distribution")
+def graphSports(dataframe):
+    st.subheader("Sports")
 
-from scipy.stats import norm
-dataframe = dataframe.dropna(subset=['ODD'])
+    dataframe_filtrado = dataframe[dataframe['SPORT'] != 'DPI']
 
-# Crear los intervalos y contar la frecuencia en cada intervalo
-intervalos = np.arange(1.0, 2.1, 0.05)
-conteo_por_intervalo, bordes = np.histogram(dataframe['ODD'], bins=intervalos)
+    # Crear una figura y ejes
+    fig, ax = plt.subplots()
 
-fig, ax = plt.subplots()
-ax.bar(bordes[:-1], conteo_por_intervalo, width=0.05, align='edge', color='lightgreen', label="Odd's frequency")
+    # Obtener colores únicos para cada valor único en la columna 'SPORT'
+    colores_por_sport = {sport: f'C{i}' for i, sport in enumerate(dataframe_filtrado['SPORT'].unique())}
 
-ax.set_xlabel('Odd').set_size(8)
-ax.set_ylabel('Frequency').set_size(8)
-ax.tick_params(axis='x', labelsize=6)
-ax.tick_params(axis='y', labelsize=6)
+    # Iterar sobre cada valor único de 'SPORT' y dibujar los puntos correspondientes
+    for sport, color in colores_por_sport.items():
+        datos_sport = dataframe_filtrado[dataframe_filtrado['SPORT'] == sport]
+        ax.scatter(datos_sport['ODD'], datos_sport['ODD'], label=sport, color=color, s=30)
 
-# Agregar una curva de distribución normal
-mu, sigma = np.mean(dataframe['ODD']), np.std(dataframe['ODD'])
-x = np.linspace(1.0, 2.0, 100)
-pdf = norm.pdf(x, mu, sigma) * np.sum(conteo_por_intervalo) * (bordes[1] - bordes[0])  # Escalar la curva para que se ajuste al histograma
-ax.plot(x, pdf, color='orange', linestyle='--', label='Normal distribution (μ='
-                                                   +str(round(mu, 2))+', σ='
-                                                   +str(round(sigma, 2))+')')
-ax.legend(fontsize=8)
+    # Configurar etiquetas y título
+    ax.set_xlabel('ODD', fontsize=8)
+    ax.set_ylabel('ODD', fontsize=8)
 
-st.pyplot(fig)
+    # Agregar leyenda
+    ax.legend(fontsize=8)
 
+    # Configurar límites de los ejes X e Y
+    ax.set_xlim(dataframe_filtrado['ODD'].min() - 0.02, dataframe_filtrado['ODD'].max() + 0.02)
+    ax.set_ylim(dataframe_filtrado['ODD'].min() - 0.02, dataframe_filtrado['ODD'].max() + 0.02)
 
-st.subheader("Linear and nonlinear prediction")
+    # Configurar tamaños de etiquetas
+    ax.tick_params(axis='x', labelsize=7)
+    ax.tick_params(axis='y', labelsize=7)
 
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
-from matplotlib.ticker import FuncFormatter
+    # Mostrar el gráfico en Streamlit
+    st.pyplot(fig)
 
-x = dataframe["N"].values.reshape(len(dataframe["N"]), 1)
-y = dataframe["PERCENTAGE"].values.reshape(len(dataframe["PERCENTAGE"]), 1)
-
-model = LinearRegression()
-model.fit(x, y)
-y_pred_linear = model.predict(x)
-
-poly = PolynomialFeatures(degree=2)
-x_poly = poly.fit_transform(x)
-model_nonlinear = LinearRegression()
-model_nonlinear.fit(x_poly, y)
-y_pred_nonlinear = model_nonlinear.predict(x_poly)
-
-fig, ax = plt.subplots()
-ax.scatter(x, y, label='Real profit', color='lightgreen', s=30)
-ax.plot(x, y_pred_linear, label='Linear prediction', color='gray')
-ax.plot(x, y_pred_nonlinear, label='Second grade prediction', color='orange')
-ax.legend(fontsize=8)
-ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.2%}'))
-ax.set_xlabel('# Bets').set_size(8)
-ax.set_ylabel('Profit').set_size(8)
-ax.tick_params(axis='x', labelsize=6)
-ax.tick_params(axis='y', labelsize=6)
-
-st.pyplot(fig)
+#graphSports(dataframe)
 
 
-st.subheader("Feature importance with random forests")
+def graphLinearNonlinear(dataframe):
+    st.subheader("Linear and nonlinear prediction")
+
+    from sklearn.preprocessing import PolynomialFeatures
+    from sklearn.linear_model import LinearRegression
+    from matplotlib.ticker import FuncFormatter
+
+    x = dataframe["N"].values.reshape(len(dataframe["N"]), 1)
+    y = dataframe["PERCENTAGE"].values.reshape(len(dataframe["PERCENTAGE"]), 1)
+
+    model = LinearRegression()
+    model.fit(x, y)
+    y_pred_linear = model.predict(x)
+
+    poly = PolynomialFeatures(degree=2)
+    x_poly = poly.fit_transform(x)
+    model_nonlinear = LinearRegression()
+    model_nonlinear.fit(x_poly, y)
+    y_pred_nonlinear = model_nonlinear.predict(x_poly)
+
+    df_resultados = pd.DataFrame({
+        'x': x.flatten(),
+        'y_PERCENTAGE': y.flatten(),
+        'y_linear': y_pred_linear.flatten(),
+        'y_nonlinear': y_pred_nonlinear.flatten()
+    })
+
+    # Visualizar los resultados en Streamlit
+    st.write(df_resultados)
+
+    fig, ax = plt.subplots()
+    ax.scatter(x, y, label='Real profit', color='lightgreen', s=30)
+    ax.plot(x, y_pred_linear, label='Linear prediction', color='gray')
+    ax.plot(x, y_pred_nonlinear, label='Second grade prediction', color='orange')
+    ax.legend(fontsize=8)
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.2%}'))
+    ax.set_xlabel('# Bets').set_size(8)
+    ax.set_ylabel('Profit').set_size(8)
+    ax.tick_params(axis='x', labelsize=6)
+    ax.tick_params(axis='y', labelsize=6)
+
+    st.pyplot(fig)
+
+graphLinearNonlinear(dataframe)
+
+
+def graphND(dataframe):
+    st.subheader("ODD's normal distribution")
+
+    from scipy.stats import norm
+    dataframe = dataframe.dropna(subset=['ODD'])
+
+    # Crear los intervalos y contar la frecuencia en cada intervalo
+    intervalos = np.arange(1.0, 2.1, 0.05)
+    conteo_por_intervalo, bordes = np.histogram(dataframe['ODD'], bins=intervalos)
+
+    fig, ax = plt.subplots()
+    ax.bar(bordes[:-1], conteo_por_intervalo, width=0.05, align='edge', color='lightgreen', label="Odd's frequency")
+
+    ax.set_xlabel('Odd').set_size(8)
+    ax.set_ylabel('Frequency').set_size(8)
+    ax.tick_params(axis='x', labelsize=6)
+    ax.tick_params(axis='y', labelsize=6)
+
+    # Agregar una curva de distribución normal
+    mu, sigma = np.mean(dataframe['ODD']), np.std(dataframe['ODD'])
+    x = np.linspace(1.0, 2.0, 100)
+    pdf = norm.pdf(x, mu, sigma) * np.sum(conteo_por_intervalo) * (
+                bordes[1] - bordes[0])  # Escalar la curva para que se ajuste al histograma
+    ax.plot(x, pdf, color='orange', linestyle='--', label='Normal distribution (μ='
+                                                          + str(round(mu, 2)) + ', σ='
+                                                          + str(round(sigma, 2)) + ')')
+    ax.legend(fontsize=8)
+
+    st.pyplot(fig)
+
+graphND(dataframe)
+
+
+
+
+
+
+
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
 
-dataframe['DATE'] = pd.to_datetime(dataframe['DATE'])
-dataframe['DAY'] = dataframe['DATE'].dt.strftime('%A')
+def graphRandomForests(dataframe):
+    st.subheader("Features importance using random forests")
+    dataframe['DATE'] = pd.to_datetime(dataframe['DATE'])
+    dataframe['DAY'] = dataframe['DATE'].dt.strftime('%A')
 
-# Eliminar columnas 'DATE' y 'EVENT'
-dataframe = dataframe.drop(['DATE', 'EVENT', 'ID', 'N', 'DIFF', 'PERCENTAGE', 'OUT'], axis=1)
+    # Eliminar columnas 'DATE' y 'EVENT'
+    dataframe = dataframe.drop(['DATE', 'ID', 'N', 'DIFF', 'PERCENTAGE', 'OUT'], axis=1)
 
-# Mapeo de valores únicos en 'CONT' a identificadores en valores enteros
-cont_mapping = {'ASIA': 1, 'EUROPE': 2, 'NA': 3, 'LA': 4, 'BCI': 5}
-dataframe['CONT'] = dataframe['CONT'].map(cont_mapping)
+    # Mapeo de valores únicos en 'CONT' a identificadores en valores enteros
+    cont_mapping = {'ASIA': 1, 'EUROPE': 2, 'NA': 3, 'LA': 4, 'BCI': 5}
+    dataframe['CONT'] = dataframe['CONT'].map(cont_mapping)
 
-# Mapeo de valores únicos en 'SPORT' a identificadores en valores enteros
-sport_mapping = {'ESPORTS': 1, 'TABLE TENNIS': 2, 'BASKETBALL': 3, 'DPI': 4}
-dataframe['SPORT'] = dataframe['SPORT'].map(sport_mapping)
+    # Mapeo de valores únicos en 'SPORT' a identificadores en valores enteros
+    sport_mapping = {'ESPORTS': 1, 'TABLE TENNIS': 2, 'BASKETBALL': 3, 'DPI': 4, 'ENTERTAINMENT': 5}
+    dataframe['SPORT'] = dataframe['SPORT'].map(sport_mapping)
 
-# Mapeo de valores únicos en 'DIA' a identificadores en valores enteros
-day_mapping = {'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7}
-dataframe['DAY'] = dataframe['DAY'].map(day_mapping)
+    # Mapeo de valores únicos en 'DIA' a identificadores en valores enteros
+    day_mapping = {'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7}
+    dataframe['DAY'] = dataframe['DAY'].map(day_mapping)
 
-# Asegurarse de que 'WL' sea una columna categórica si es multiclase
-dataframe['WL'] = dataframe['WL'].astype('category')
+    # Mapeo de valores únicos en 'EVENT' a identificadores en valores enteros
+    dataframe['EVENT'] = dataframe['EVENT'].astype('category').cat.codes + 1
 
-# Separar las características (X) y la variable objetivo (y)
-X = dataframe.drop("WL", axis=1)
-y = dataframe["WL"]
+    # Asegurarse de que 'WL' sea una columna categórica si es multiclase
+    dataframe['WL'] = dataframe['WL'].astype('category')
 
-# Dividir los datos en conjuntos de entrenamiento y prueba
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+    # Separar las características (X) y la variable objetivo (y)
+    X = dataframe.drop("WL", axis=1)
+    y = dataframe["WL"]
 
-# Escalar las características para mejorar el rendimiento del modelo
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+    # Dividir los datos en conjuntos de entrenamiento y prueba
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
 
-# Crear el modelo RandomForestClassifier
-forest = RandomForestClassifier(n_estimators=100, random_state=1)
+    # Escalar las características para mejorar el rendimiento del modelo
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
 
-# Entrenar el modelo
-forest.fit(X_train_scaled, y_train)
+    # Crear el modelo RandomForestClassifier
+    forest = RandomForestClassifier(n_estimators=100, random_state=1)
 
-# Realizar predicciones en el conjunto de prueba
-y_pred = forest.predict(X_test_scaled)
+    # Entrenar el modelo
+    forest.fit(X_train_scaled, y_train)
 
-# Evaluar la precisión del modelo
-accuracy = accuracy_score(y_test, y_pred)
-print(f"Precisión del modelo: {accuracy}")
+    # Realizar predicciones en el conjunto de prueba
+    y_pred = forest.predict(X_test_scaled)
+
+    # Evaluar la precisión del modelo
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Precisión del modelo: {accuracy}")
+
+    # Obtener las etiquetas de las características y la importancia
+    feat_labels = X.columns
+    importances = forest.feature_importances_
+
+    # Ordenar las características por importancia
+    indices = np.argsort(importances)[::-1]
+
+    colors = np.where(importances[indices] > 0.33, 'lightgreen', 'salmon')
+
+    # Crear un gráfico de barras para visualizar la importancia de cada característica
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(range(X.shape[1]), importances[indices], align="center", color=colors)
+    ax.set_xticks(range(X.shape[1]))
+    ax.set_xticklabels(feat_labels[indices])
+    ax.set_xlabel("Feature").set_size(13)
+    ax.set_ylabel("Feature importance").set_size(13)
+
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0, symbol='%'))
+
+    # ax.set_title("Importancia de las Características en RandomForestClassifier")
+    plt.tight_layout()
+
+    # Mostrar el gráfico en Streamlit
+    st.pyplot(fig)
 
 
-# Obtener las etiquetas de las características y la importancia
-feat_labels = X.columns
-importances = forest.feature_importances_
 
-# Ordenar las características por importancia
-indices = np.argsort(importances)[::-1]
+df_sports['WL'] = pd.to_numeric(df_sports['WL'])
+winrate_sports = df_sports.groupby('SPORT')['WL'].mean()*100
 
-colors = np.where(importances[indices] > 0.33, 'lightgreen', 'salmon')
+num_apuestas = df_sports.groupby('SPORT')['N'].count()
 
-# Crear un gráfico de barras para visualizar la importancia de cada característica
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.bar(range(X.shape[1]), importances[indices], align="center", color=colors)
-ax.set_xticks(range(X.shape[1]))
-ax.set_xticklabels(feat_labels[indices])
-ax.set_xlabel("Feature").set_size(13)
-ax.set_ylabel("Feature importance").set_size(13)
+df_sports = pd.DataFrame({
+    'SPORT': winrate_sports.index,
+    'WR': winrate_sports.values,
+    'BETS': num_apuestas.values
+})
 
-ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0, symbol='%'))
+print(df_sports)
 
-#ax.set_title("Importancia de las Características en RandomForestClassifier")
-plt.tight_layout()
+import altair as alt
 
-# Mostrar el gráfico en Streamlit
-st.pyplot(fig)
+def graphWRSport(df_sports):
+    st.subheader("SPORT's win rate")
+    df_sports['WR'] = df_sports['WR'] / 100
+    scatter_chart = alt.Chart(df_sports).mark_circle(size=90).encode(
+        x='BETS',
+        y=alt.Y('WR:Q', axis=alt.Axis(format='%')),
+        color='SPORT',
+        tooltip=['SPORT', 'BETS', alt.Tooltip('WR:Q', format='.1%')]
+    ).properties(
+        width=600,
+        height=400
+    )
+    st.altair_chart(scatter_chart, use_container_width=True)
+
+graphWRSport(df_sports)
 
 
 
+def graphWinAlt(dataframe):
+    st.subheader("ODD's dailies results")
+    dataframe_filtrado = dataframe[dataframe['SPORT'] != 'DPI'].copy()
+    dataframe_filtrado.loc[:, 'WIN OR LOSE'] = dataframe_filtrado['WL'].apply(lambda x: 'LOSS' if x == 0 else 'WIN')
+    custom_colors = ['salmon', 'green']
+    y_range = [0.95, dataframe_filtrado['ODD'].max()]
+    scatter_chart = alt.Chart(dataframe_filtrado).mark_circle(size=100).encode(
+        x='DATE:T',
+        y=alt.Y('ODD:Q', scale=alt.Scale(domain=y_range)),
+        color=alt.Color('WIN OR LOSE:N', scale=alt.Scale(range=custom_colors)),
+        tooltip=['WIN OR LOSE', 'DATE', 'ODD']
+    ).properties(
+        width=600,
+        height=400
+    )
+    st.altair_chart(scatter_chart, use_container_width=True)
+
+graphWinAlt(df_sports_bets)
+
+
+
+def graphSportsAltDate(dataframe):
+    st.subheader("SPORT's dailies results")
+    dataframe_filtrado = dataframe[dataframe['SPORT'] != 'DPI']
+    custom_colors = ['orange', 'green', 'gray', 'white']
+    y_range = [0.95, dataframe_filtrado['ODD'].max()]
+    scatter_chart = alt.Chart(dataframe_filtrado).mark_circle(size=100).encode(
+        x='DATE:T',
+        y=alt.Y('ODD:Q', scale=alt.Scale(domain=y_range)),
+        color=alt.Color('SPORT:N', scale=alt.Scale(range=custom_colors)),
+        tooltip=['SPORT', 'DATE', 'ODD']
+    ).properties(
+        width=600,
+        height=400
+    )
+    st.altair_chart(scatter_chart, use_container_width=True)
+
+graphSportsAltDate(df_all)
+
+from mlxtend.plotting import heatmap
+import seaborn as sns
+
+
+def graphCorrelacion(dataframe):
+    st.subheader("Features correlation matrix")
+    cm = np.corrcoef(dataframe.select_dtypes(include=np.number).values.T)
+    fig, ax = plt.subplots()
+    sns.heatmap(cm, ax=ax, annot=True, fmt=".2f", cmap="coolwarm",
+                xticklabels=dataframe.select_dtypes(include=np.number).columns,
+                yticklabels=dataframe.select_dtypes(include=np.number).columns)
+    st.pyplot(fig)
+
+#graphCorrelacion(df_all)
+
+
+graphRandomForests(df_all)
+
+
+def graphCorrelacionv2(dataframe):
+    st.subheader("Features correlation matrix")
+
+    dataframe['DAY'] = dataframe['DATE'].dt.strftime('%A')
+    dataframe['DAY'], _ = pd.factorize(dataframe['DAY'])
+
+    dataframe['SPORT'], _ = pd.factorize(dataframe['SPORT'])
+    dataframe['CONT'], _ = pd.factorize(dataframe['CONT'])
+    dataframe['EVENT'], _ = pd.factorize(dataframe['EVENT'])
+    dataframe['WL'] = pd.to_numeric(dataframe['WL'], errors='coerce')
+    #dataframe['DIFF'] = pd.to_numeric(dataframe['DIFF'], errors='coerce')
+    dataframe['ODD'] = pd.to_numeric(dataframe['ODD'], errors='coerce')
+
+    numeric_columns = dataframe.select_dtypes(include=np.number)
+
+    if len(numeric_columns.columns) >= 2:
+        cm = np.corrcoef(numeric_columns.values.T)
+        cm_df = pd.DataFrame(cm, columns=numeric_columns.columns, index=numeric_columns.columns)
+        fig, ax = plt.subplots()
+        sns.heatmap(cm_df, annot=True, fmt=".2f", cmap="coolwarm", ax=ax)
+        ax.set_xlabel("")
+        ax.set_ylabel("")
+        st.pyplot(fig)
+    else:
+        st.warning("No hay suficientes columnas numéricas para calcular la matriz de correlación.")
+
+graphCorrelacionv2(df_all)
+
+
+
+
+
+st.subheader("WIP")
 col1, col2, col3 = st.columns(3)
 col1.metric(label="Constante a", value=round(a, 4))
 col2.metric(label="Constante b", value=round(b, 4))
 col3.metric(label="Constante c", value=round(c, 4))
 
 st.latex(r"P(x_1, x_2, x_3) = ax_1 + bx_2 + cx_3")
+
+
+st.subheader("Clustering analysis")
+from sklearn.datasets import make_blobs
+#X, y = make_blobs(n_samples=250,n_features=2,centers=3,cluster_std=0.5,shuffle=True,random_state=0)
+X = dataframe[['N', 'PERCENTAGE']].values
+y = dataframe['PERCENTAGE'].values
+fig, ax = plt.subplots()
+ax.scatter(X[:, 0],
+            X[:, 1],
+            s=50,
+            c='white',
+            marker='o',
+            edgecolor='black')
+st.pyplot(fig)
+
+from sklearn.cluster import KMeans
+km = KMeans(n_clusters=3,
+            init='random',
+            n_init = 10,
+            max_iter = 300,
+            tol = 1e-04,
+            random_state = 0)
+y_km = km.fit_predict(X)
+
+fig, ax = plt.subplots()
+ax.scatter(X[y_km == 0, 0],
+           X[y_km == 0, 1],
+           s=50, c='lightgreen',marker='s', edgecolor='black',label='Cluster 1')
+ax.scatter(X[y_km == 1, 0],
+           X[y_km == 1, 1],
+           s=50, c='orange',marker='o', edgecolor='black',label='Cluster 2')
+ax.scatter(X[y_km == 2, 0],
+           X[y_km == 2, 1],
+           s=50, c='mistyrose',marker='v', edgecolor='black',label='Cluster 3')
+ax.scatter(km.cluster_centers_[:, 0],
+           km.cluster_centers_[:, 1],
+           s=250, c='red',marker='*', edgecolor='black',label='Centroids')
+ax.grid()
+ax.legend(scatterpoints=1)
+st.pyplot(fig)
